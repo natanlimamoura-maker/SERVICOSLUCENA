@@ -92,15 +92,30 @@
           </div>
         </div>
 
-        <!-- Tirar Foto da Nota Fiscal -->
+        <!-- Anexar Foto (Câmera ou Galeria) -->
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Foto da Nota Fiscal / Comprovante</label>
-          <input type="file" id="fotoNota" accept="image/*" capture="environment" onchange="converterFoto(event)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-sky-600 file:text-white cursor-pointer">
+          <label class="block text-xs text-slate-400 mb-1">Comprovante / Nota Fiscal</label>
+          
+          <!-- Inputs Ocultos -->
+          <input type="file" id="inputCamera" accept="image/*" capture="environment" onchange="converterFoto(event)" class="hidden">
+          <input type="file" id="inputGaleria" accept="image/*" onchange="converterFoto(event)" class="hidden">
           <input type="hidden" id="fotoBase64" value="">
-          <div id="previewFotoContainer" class="hidden mt-2 flex items-center gap-2">
-            <img id="previewFoto" src="" class="w-12 h-12 object-cover rounded-lg border border-slate-700">
-            <span class="text-xs text-emerald-400">✓ Foto anexada</span>
-            <button type="button" onclick="removerFoto()" class="text-xs text-rose-500 underline ml-auto">Remover</button>
+
+          <!-- Botões Visíveis -->
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="document.getElementById('inputCamera').click()" class="bg-slate-950 border border-slate-800 hover:border-sky-500 text-slate-300 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+              📷 Tirar Foto
+            </button>
+            <button type="button" onclick="document.getElementById('inputGaleria').click()" class="bg-slate-950 border border-slate-800 hover:border-sky-500 text-slate-300 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+              🖼️ Abrir Galeria
+            </button>
+          </div>
+
+          <!-- Preview da Imagem Selecionada -->
+          <div id="previewFotoContainer" class="hidden mt-2 flex items-center gap-2 bg-slate-950 border border-slate-800 p-2 rounded-xl">
+            <img id="previewFoto" src="" class="w-10 h-10 object-cover rounded-lg border border-slate-700">
+            <span class="text-xs text-emerald-400 font-medium">✓ Foto anexada</span>
+            <button type="button" onclick="removerFoto()" class="text-xs text-rose-500 underline ml-auto font-medium">Remover</button>
           </div>
         </div>
 
@@ -175,7 +190,6 @@
     let saidas = JSON.parse(localStorage.getItem('rodagem_saidas')) || [];
     let meta = parseFloat(localStorage.getItem('rodagem_meta')) || 15000;
 
-    // Define data padrão de hoje no input
     document.getElementById('dataSaida').value = new Date().toISOString().split('T')[0];
     document.getElementById('metaValor').innerText = meta.toLocaleString('pt-BR');
 
@@ -239,7 +253,8 @@
     }
 
     function removerFoto() {
-      document.getElementById('fotoNota').value = '';
+      document.getElementById('inputCamera').value = '';
+      document.getElementById('inputGaleria').value = '';
       document.getElementById('fotoBase64').value = '';
       document.getElementById('previewFoto').src = '';
       document.getElementById('previewFotoContainer').classList.add('hidden');
@@ -271,12 +286,10 @@
       const lucro = frete - (combustivel + pedagio + outros);
 
       if (editId) {
-        // Modo Edição
         saidas = saidas.map(s => s.id == editId ? {
           id: Number(editId), empresa, data, frete, combustivel, pedagio, outros, gastos: combustivel + pedagio + outros, lucro, foto
         } : s);
       } else {
-        // Novo Registro
         const novaSaida = {
           id: Date.now(), empresa, data, frete, combustivel, pedagio, outros, gastos: combustivel + pedagio + outros, lucro, foto
         };
