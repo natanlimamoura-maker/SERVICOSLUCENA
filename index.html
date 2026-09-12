@@ -70,7 +70,7 @@
         <div id="barraProgresso" class="bg-sky-500 h-full w-0 transition-all duration-500"></div>
       </div>
       <div class="flex justify-between text-xs pt-1">
-        <span class="text-slate-400">Acumulado: <strong id="totalLucro" class="text-emerald-400">R$ 0,00</strong></span>
+        <span class="text-slate-400">Total Recebido: <strong id="totalLucro" class="text-emerald-400">R$ 0,00</strong></span>
       </div>
     </div>
 
@@ -123,6 +123,18 @@
           </div>
         </div>
 
+        <!-- SEÇÃO DE STATUS DE PAGAMENTO -->
+        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
+          <label for="checkPago" class="text-xs font-bold text-slate-300 cursor-pointer flex items-center gap-2">
+            💳 Status do Pagamento
+          </label>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="checkPago" checked class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            <span id="textoPago" class="ml-2 text-xs font-bold text-emerald-400">Pago</span>
+          </label>
+        </div>
+
         <!-- SEÇÃO DE COMPROVANTE COM CÂMERA E GALERIA -->
         <div>
           <label class="block text-xs text-slate-400 mb-1">Comprovante / Nota Fiscal</label>
@@ -168,6 +180,7 @@
     <div id="abaBalanco" class="hidden space-y-3">
       <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
         <h3 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2">📊 Resumo Geral das Saídas</h3>
+        
         <div class="grid grid-cols-2 gap-2 text-xs">
           <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
             <span class="text-slate-400 block mb-1">Faturamento Bruto</span>
@@ -178,14 +191,27 @@
             <strong id="balancoGastos" class="text-base text-rose-400 font-extrabold">R$ 0,00</strong>
           </div>
         </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="text-slate-400 block mb-1">🟢 Lucro Recebido</span>
+            <strong id="balancoLucroPago" class="text-sm text-emerald-400 font-bold">R$ 0,00</strong>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="text-slate-400 block mb-1">🟡 A Receber (Pendente)</span>
+            <strong id="balancoLucroPendente" class="text-sm text-amber-400 font-bold">R$ 0,00</strong>
+          </div>
+        </div>
+
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-2">
           <span class="text-slate-400 font-bold block border-b border-slate-800 pb-1">Detalhamento dos Gastos:</span>
           <div class="flex justify-between"><span class="text-slate-400">⛽ Combustível:</span><strong id="balancoCombustivel" class="text-slate-200">R$ 0,00</strong></div>
           <div class="flex justify-between"><span class="text-slate-400">🛣️ Pedágios:</span><strong id="balancoPedagio" class="text-slate-200">R$ 0,00</strong></div>
           <div class="flex justify-between"><span class="text-slate-400">🔧 Outras Despesas:</span><strong id="balancoOutros" class="text-slate-200">R$ 0,00</strong></div>
         </div>
+
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs flex justify-between items-center">
-          <span class="text-slate-300 font-bold">Lucro Líquido Real:</span>
+          <span class="text-slate-300 font-bold">Lucro Total Acumulado:</span>
           <strong id="balancoLucro" class="text-lg text-emerald-400 font-black">R$ 0,00</strong>
         </div>
       </div>
@@ -212,6 +238,18 @@
 
     document.getElementById('dataSaida').value = new Date().toISOString().split('T')[0];
     document.getElementById('metaValor').innerText = meta.toLocaleString('pt-BR');
+
+    // Event listener para o switch de Pago
+    document.getElementById('checkPago').addEventListener('change', function(e) {
+      const texto = document.getElementById('textoPago');
+      if (e.target.checked) {
+        texto.innerText = 'Pago';
+        texto.className = 'ml-2 text-xs font-bold text-emerald-400';
+      } else {
+        texto.innerText = 'Pendente';
+        texto.className = 'ml-2 text-xs font-bold text-amber-400';
+      }
+    });
 
     async function autenticarUsuario(e) {
       e.preventDefault();
@@ -302,7 +340,6 @@
       }
     }
 
-    // COMPACTADOR E PROCESSADOR UNIVERSAL DE IMAGENS
     function processarFoto(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -317,7 +354,7 @@
         
         img.onload = function () {
           const canvas = document.createElement('canvas');
-          const maxWidth = 1000; // Largura máxima ideal para recibos
+          const maxWidth = 1000;
           let width = img.width;
           let height = img.height;
 
@@ -331,7 +368,6 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Compacta para JPEG com qualidade 0.65 (super leve e legível)
           const compressed = canvas.toDataURL('image/jpeg', 0.65);
           
           document.getElementById('fotoBase64').value = compressed;
@@ -363,6 +399,12 @@
       return lucro;
     }
 
+    async function alternarStatusPago(id, statusAtual) {
+      const novoStatus = !statusAtual;
+      await _supabase.from('saidas').update({ pago: novoStatus }).eq('id', id);
+      await carregarDadosNuvem();
+    }
+
     async function salvarSaida(e) {
       e.preventDefault();
       if (!usuarioAtual) return;
@@ -379,6 +421,7 @@
       const pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
       const outros = parseFloat(document.getElementById('outros').value) || 0;
       const foto = document.getElementById('fotoBase64').value;
+      const pago = document.getElementById('checkPago').checked;
       const gastos = combustivel + pedagio + outros;
       const lucro = frete - gastos;
 
@@ -392,6 +435,7 @@
         gastos, 
         lucro, 
         foto,
+        pago,
         usuario_id: usuarioAtual.id 
       };
 
@@ -422,6 +466,11 @@
       document.getElementById('pedagio').value = s.pedagio || 0;
       document.getElementById('outros').value = s.outros || 0;
 
+      const isPago = s.pago !== undefined ? s.pago : true;
+      document.getElementById('checkPago').checked = isPago;
+      document.getElementById('textoPago').innerText = isPago ? 'Pago' : 'Pendente';
+      document.getElementById('textoPago').className = `ml-2 text-xs font-bold ${isPago ? 'text-emerald-400' : 'text-amber-400'}`;
+
       if (s.foto) {
         document.getElementById('fotoBase64').value = s.foto;
         document.getElementById('previewFoto').src = s.foto;
@@ -442,6 +491,9 @@
       document.getElementById('editId').value = '';
       document.getElementById('formSaida').reset();
       document.getElementById('dataSaida').value = new Date().toISOString().split('T')[0];
+      document.getElementById('checkPago').checked = true;
+      document.getElementById('textoPago').innerText = 'Pago';
+      document.getElementById('textoPago').className = 'ml-2 text-xs font-bold text-emerald-400';
       document.getElementById('tituloForm').innerText = '➕ Nova Saída';
       document.getElementById('btnSalvar').innerText = 'Salvar na Nuvem';
       document.getElementById('btnCancelarEdicao').classList.add('hidden');
@@ -476,15 +528,26 @@
     }
 
     function atualizarBalanco() {
-      let tFrete = 0, tGastos = 0, tCombustivel = 0, tPedagio = 0, tOutros = 0, tLucro = 0;
+      let tFrete = 0, tGastos = 0, tCombustivel = 0, tPedagio = 0, tOutros = 0, tLucro = 0, tLucroPago = 0, tLucroPendente = 0;
 
       saidas.forEach(s => {
-        tFrete += Number(s.frete) || 0;
-        tGastos += Number(s.gastos) || 0;
+        const frete = Number(s.frete) || 0;
+        const gastos = Number(s.gastos) || 0;
+        const lucro = Number(s.lucro) || 0;
+        const isPago = s.pago !== undefined ? s.pago : true;
+
+        tFrete += frete;
+        tGastos += gastos;
         tCombustivel += Number(s.combustivel) || 0;
         tPedagio += Number(s.pedagio) || 0;
         tOutros += Number(s.outros) || 0;
-        tLucro += Number(s.lucro) || 0;
+        tLucro += lucro;
+
+        if (isPago) {
+          tLucroPago += lucro;
+        } else {
+          tLucroPendente += lucro;
+        }
       });
 
       document.getElementById('balancoFrete').innerText = `R$ ${tFrete.toFixed(2)}`;
@@ -492,6 +555,8 @@
       document.getElementById('balancoCombustivel').innerText = `R$ ${tCombustivel.toFixed(2)}`;
       document.getElementById('balancoPedagio').innerText = `R$ ${tPedagio.toFixed(2)}`;
       document.getElementById('balancoOutros').innerText = `R$ ${tOutros.toFixed(2)}`;
+      document.getElementById('balancoLucroPago').innerText = `R$ ${tLucroPago.toFixed(2)}`;
+      document.getElementById('balancoLucroPendente').innerText = `R$ ${tLucroPendente.toFixed(2)}`;
       
       const elLucro = document.getElementById('balancoLucro');
       elLucro.innerText = `R$ ${tLucro.toFixed(2)}`;
@@ -502,7 +567,7 @@
       const lista = document.getElementById('listaSaidas');
       lista.innerHTML = '';
 
-      let totalLucro = 0;
+      let totalLucroPago = 0;
 
       if (saidas.length === 0) {
         lista.innerHTML = `
@@ -514,12 +579,20 @@
 
       saidas.forEach(s => {
         const fLucro = Number(s.lucro) || 0;
-        totalLucro += fLucro;
+        const isPago = s.pago !== undefined ? s.pago : true;
+        
+        if (isPago) totalLucroPago += fLucro;
+
         lista.innerHTML += `
           <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
             <div class="space-y-1">
-              <strong class="text-slate-200 text-sm block">${s.empresa}</strong>
-              <span class="text-slate-500">${s.data ? s.data.split('-').reverse().join('/') : ''}</span>
+              <div class="flex items-center gap-2">
+                <strong class="text-slate-200 text-sm">${s.empresa}</strong>
+                <button onclick="alternarStatusPago(${s.id}, ${isPago})" class="text-[10px] px-2 py-0.5 rounded-full font-bold ${isPago ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
+                  ${isPago ? '🟢 Pago' : '🟡 Pendente'}
+                </button>
+              </div>
+              <span class="text-slate-500 block">${s.data ? s.data.split('-').reverse().join('/') : ''}</span>
               <div class="text-slate-400">
                 Frete: <span class="text-slate-300">R$ ${Number(s.frete).toFixed(2)}</span> | Gastos: <span class="text-rose-400">R$ ${Number(s.gastos).toFixed(2)}</span>
               </div>
@@ -540,9 +613,9 @@
         `;
       });
 
-      document.getElementById('totalLucro').innerText = `R$ ${totalLucro.toFixed(2)}`;
+      document.getElementById('totalLucro').innerText = `R$ ${totalLucroPago.toFixed(2)}`;
       
-      const porc = Math.min(Math.round((totalLucro / meta) * 100), 100);
+      const porc = Math.min(Math.round((totalLucroPago / meta) * 100), 100);
       document.getElementById('metaPorcentagem').innerText = `${porc}%`;
       document.getElementById('barraProgresso').style.width = `${Math.max(porc, 0)}%`;
 
