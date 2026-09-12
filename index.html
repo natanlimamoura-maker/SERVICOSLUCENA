@@ -11,8 +11,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <!-- CSS (Tailwind via CDN) -->
+  <!-- Tailwind CSS & Supabase JS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-24 font-sans antialiased selection:bg-sky-500 selection:text-white">
 
@@ -21,7 +22,9 @@
     <!-- Cabeçalho -->
     <header class="flex justify-between items-center border-b border-slate-800 pb-3">
       <div>
-        <h1 class="text-xl font-black text-sky-400 tracking-tight">🚚 RodagemPro</h1>
+        <h1 class="text-xl font-black text-sky-400 tracking-tight flex items-center gap-2">
+          🚚 RodagemPro <span id="statusNuvem" class="text-[10px] bg-emerald-900/80 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full">Online</span>
+        </h1>
         <p class="text-xs text-slate-400">Controle de Saídas & Lucro Real</p>
       </div>
       <button onclick="definirMeta()" class="bg-slate-900 border border-slate-800 text-sky-400 text-xs px-3 py-1.5 rounded-xl font-medium">
@@ -29,7 +32,7 @@
       </button>
     </header>
 
-    <!-- Barra de Progresso da Meta -->
+    <!-- Progresso da Meta Mensal -->
     <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2">
       <div class="flex justify-between text-xs">
         <span class="text-slate-400">Progresso da Meta Mensal</span>
@@ -50,7 +53,7 @@
       <button id="btnAbaBalanco" onclick="mudarAba('balanco')" class="py-2.5 rounded-lg text-slate-400 hover:text-white transition">Balanço</button>
     </div>
 
-    <!-- ABA 1: FORMULÁRIO DE CADASTRO / EDIÇÃO -->
+    <!-- ABA 1: FORMULÁRIO -->
     <div id="abaForm">
       <form id="formSaida" onsubmit="salvarSaida(event)" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
@@ -92,26 +95,18 @@
           </div>
         </div>
 
-        <!-- Anexar Foto (Câmera ou Galeria) -->
+        <!-- Anexo de Fotos: Câmera ou Galeria (Qualquer tipo de foto) -->
         <div>
           <label class="block text-xs text-slate-400 mb-1">Comprovante / Nota Fiscal</label>
-          
-          <!-- Inputs Ocultos -->
           <input type="file" id="inputCamera" accept="image/*" capture="environment" onchange="converterFoto(event)" class="hidden">
           <input type="file" id="inputGaleria" accept="image/*" onchange="converterFoto(event)" class="hidden">
           <input type="hidden" id="fotoBase64" value="">
 
-          <!-- Botões Visíveis -->
           <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="document.getElementById('inputCamera').click()" class="bg-slate-950 border border-slate-800 hover:border-sky-500 text-slate-300 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-              📷 Tirar Foto
-            </button>
-            <button type="button" onclick="document.getElementById('inputGaleria').click()" class="bg-slate-950 border border-slate-800 hover:border-sky-500 text-slate-300 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-              🖼️ Abrir Galeria
-            </button>
+            <button type="button" onclick="document.getElementById('inputCamera').click()" class="bg-slate-950 border border-slate-800 hover:border-sky-500 text-slate-300 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">📷 Tirar Foto</button>
+            <button type="button" onclick="document.getElementById('inputGaleria').click()" class="bg-slate-950 border border-slate-800 hover:border-sky-500 text-slate-300 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">🖼️ Galeria</button>
           </div>
 
-          <!-- Preview da Imagem Selecionada -->
           <div id="previewFotoContainer" class="hidden mt-2 flex items-center gap-2 bg-slate-950 border border-slate-800 p-2 rounded-xl">
             <img id="previewFoto" src="" class="w-10 h-10 object-cover rounded-lg border border-slate-700">
             <span class="text-xs text-emerald-400 font-medium">✓ Foto anexada</span>
@@ -124,9 +119,7 @@
           <span id="lucroPrevisto" class="text-sm font-extrabold text-emerald-400">R$ 0,00</span>
         </div>
 
-        <button type="submit" id="btnSalvar" class="w-full bg-sky-600 hover:bg-sky-500 font-bold py-3 rounded-xl text-sm transition">
-          Salvar Saída
-        </button>
+        <button type="submit" id="btnSalvar" class="w-full bg-sky-600 hover:bg-sky-500 font-bold py-3 rounded-xl text-sm transition">Salvar na Nuvem</button>
       </form>
     </div>
 
@@ -136,11 +129,10 @@
       <div id="listaSaidas" class="space-y-2"></div>
     </div>
 
-    <!-- ABA 3: BALANÇO DE GASTOS E LUCROS -->
+    <!-- ABA 3: BALANÇO -->
     <div id="abaBalanco" class="hidden space-y-3">
       <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
         <h3 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2">📊 Resumo Geral das Saídas</h3>
-        
         <div class="grid grid-cols-2 gap-2 text-xs">
           <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
             <span class="text-slate-400 block mb-1">Faturamento Bruto</span>
@@ -151,23 +143,12 @@
             <strong id="balancoGastos" class="text-base text-rose-400 font-extrabold">R$ 0,00</strong>
           </div>
         </div>
-
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-2">
           <span class="text-slate-400 font-bold block border-b border-slate-800 pb-1">Detalhamento dos Gastos:</span>
-          <div class="flex justify-between">
-            <span class="text-slate-400">⛽ Combustível:</span>
-            <strong id="balancoCombustivel" class="text-slate-200">R$ 0,00</strong>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-400">🛣️ Pedágios:</span>
-            <strong id="balancoPedagio" class="text-slate-200">R$ 0,00</strong>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-400">🔧 Outras Despesas:</span>
-            <strong id="balancoOutros" class="text-slate-200">R$ 0,00</strong>
-          </div>
+          <div class="flex justify-between"><span class="text-slate-400">⛽ Combustível:</span><strong id="balancoCombustivel" class="text-slate-200">R$ 0,00</strong></div>
+          <div class="flex justify-between"><span class="text-slate-400">🛣️ Pedágios:</span><strong id="balancoPedagio" class="text-slate-200">R$ 0,00</strong></div>
+          <div class="flex justify-between"><span class="text-slate-400">🔧 Outras Despesas:</span><strong id="balancoOutros" class="text-slate-200">R$ 0,00</strong></div>
         </div>
-
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs flex justify-between items-center">
           <span class="text-slate-300 font-bold">Lucro Líquido Real:</span>
           <strong id="balancoLucro" class="text-lg text-emerald-400 font-black">R$ 0,00</strong>
@@ -177,7 +158,7 @@
 
   </div>
 
-  <!-- Modal para Visualização da Foto da Nota Fiscal -->
+  <!-- Modal para Exibição da Nota Fiscal/Comprovante -->
   <div id="modalFoto" onclick="fecharModalFoto()" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
     <div class="relative max-w-sm w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden p-2">
       <img id="imgModal" src="" class="w-full h-auto max-h-[80vh] object-contain rounded-xl">
@@ -185,13 +166,25 @@
     </div>
   </div>
 
-  <!-- Lógica JavaScript Pure -->
   <script>
-    let saidas = JSON.parse(localStorage.getItem('rodagem_saidas')) || [];
+    // CONFIGURAÇÃO EXCLUSIVA DO SUPABASE DO SEU AMIGO
+    const SUPABASE_URL = 'https://ghglggsrhuognugszjev.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_RkjFKJJUOn3EFcRUFsXhOw_PvZmoiHo';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let saidas = [];
     let meta = parseFloat(localStorage.getItem('rodagem_meta')) || 15000;
 
     document.getElementById('dataSaida').value = new Date().toISOString().split('T')[0];
     document.getElementById('metaValor').innerText = meta.toLocaleString('pt-BR');
+
+    async function carregarDadosNuvem() {
+      const { data, error } = await _supabase.from('saidas').select('*').order('id', { ascending: false });
+      if (!error && data) {
+        saidas = data;
+        renderizar();
+      }
+    }
 
     function mudarAba(aba) {
       document.getElementById('abaForm').classList.add('hidden');
@@ -202,9 +195,7 @@
       const btnHist = document.getElementById('btnAbaHistorico');
       const btnBal = document.getElementById('btnAbaBalanco');
 
-      [btnForm, btnHist, btnBal].forEach(b => {
-        b.className = 'py-2.5 rounded-lg text-slate-400 hover:text-white transition';
-      });
+      [btnForm, btnHist, btnBal].forEach(b => b.className = 'py-2.5 rounded-lg text-slate-400 hover:text-white transition');
 
       if (aba === 'form') {
         document.getElementById('abaForm').classList.remove('hidden');
@@ -219,18 +210,26 @@
       }
     }
 
+    // Suporte universal a fotos (qualquer formato) com compressão inteligente
     function converterFoto(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione um arquivo de imagem válido.');
+        return;
+      }
 
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = function (event) {
         const img = new Image();
+        img.crossOrigin = 'anonymous';
         img.src = event.target.result;
+        
         img.onload = function () {
           const canvas = document.createElement('canvas');
-          const maxWidth = 800;
+          const maxWidth = 1000; // Resolução otimizada para legibilidade de notas
           let width = img.width;
           let height = img.height;
 
@@ -244,10 +243,15 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          const compressed = canvas.toDataURL('image/jpeg', 0.6);
+          // Converte qualquer formato de entrada para JPEG comprimido leve
+          const compressed = canvas.toDataURL('image/jpeg', 0.7);
           document.getElementById('fotoBase64').value = compressed;
           document.getElementById('previewFoto').src = compressed;
           document.getElementById('previewFotoContainer').classList.remove('hidden');
+        };
+
+        img.onerror = function() {
+          alert('Não foi possível processar a imagem selecionada.');
         };
       };
     }
@@ -273,7 +277,7 @@
       return lucro;
     }
 
-    function salvarSaida(e) {
+    async function salvarSaida(e) {
       e.preventDefault();
       const editId = document.getElementById('editId').value;
       const empresa = document.getElementById('empresa').value;
@@ -283,22 +287,20 @@
       const pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
       const outros = parseFloat(document.getElementById('outros').value) || 0;
       const foto = document.getElementById('fotoBase64').value;
-      const lucro = frete - (combustivel + pedagio + outros);
+      const gastos = combustivel + pedagio + outros;
+      const lucro = frete - gastos;
+
+      const payload = { empresa, data, frete, combustivel, pedagio, outros, gastos, lucro, foto };
 
       if (editId) {
-        saidas = saidas.map(s => s.id == editId ? {
-          id: Number(editId), empresa, data, frete, combustivel, pedagio, outros, gastos: combustivel + pedagio + outros, lucro, foto
-        } : s);
+        await _supabase.from('saidas').update(payload).eq('id', Number(editId));
       } else {
-        const novaSaida = {
-          id: Date.now(), empresa, data, frete, combustivel, pedagio, outros, gastos: combustivel + pedagio + outros, lucro, foto
-        };
-        saidas.unshift(novaSaida);
+        payload.id = Date.now();
+        await _supabase.from('saidas').insert([payload]);
       }
 
-      localStorage.setItem('rodagem_saidas', JSON.stringify(saidas));
       cancelarEdicao();
-      renderizar();
+      await carregarDadosNuvem();
       mudarAba('historico');
     }
 
@@ -323,7 +325,7 @@
       }
 
       document.getElementById('tituloForm').innerText = '✏️ Editar Saída';
-      document.getElementById('btnSalvar').innerText = 'Atualizar Saída';
+      document.getElementById('btnSalvar').innerText = 'Atualizar na Nuvem';
       document.getElementById('btnCancelarEdicao').classList.remove('hidden');
 
       calcularLucro();
@@ -335,17 +337,16 @@
       document.getElementById('formSaida').reset();
       document.getElementById('dataSaida').value = new Date().toISOString().split('T')[0];
       document.getElementById('tituloForm').innerText = '➕ Nova Saída';
-      document.getElementById('btnSalvar').innerText = 'Salvar Saída';
+      document.getElementById('btnSalvar').innerText = 'Salvar na Nuvem';
       document.getElementById('btnCancelarEdicao').classList.add('hidden');
       removerFoto();
       calcularLucro();
     }
 
-    function excluirSaida(id) {
-      if (confirm('Deseja realmente excluir esta saída?')) {
-        saidas = saidas.filter(s => s.id !== id);
-        localStorage.setItem('rodagem_saidas', JSON.stringify(saidas));
-        renderizar();
+    async function excluirSaida(id) {
+      if (confirm('Deseja realmente excluir esta saída da nuvem?')) {
+        await _supabase.from('saidas').delete().eq('id', id);
+        await carregarDadosNuvem();
       }
     }
 
@@ -372,12 +373,12 @@
       let tFrete = 0, tGastos = 0, tCombustivel = 0, tPedagio = 0, tOutros = 0, tLucro = 0;
 
       saidas.forEach(s => {
-        tFrete += s.frete || 0;
-        tGastos += s.gastos || 0;
-        tCombustivel += s.combustivel || 0;
-        tPedagio += s.pedagio || 0;
-        tOutros += s.outros || 0;
-        tLucro += s.lucro || 0;
+        tFrete += Number(s.frete) || 0;
+        tGastos += Number(s.gastos) || 0;
+        tCombustivel += Number(s.combustivel) || 0;
+        tPedagio += Number(s.pedagio) || 0;
+        tOutros += Number(s.outros) || 0;
+        tLucro += Number(s.lucro) || 0;
       });
 
       document.getElementById('balancoFrete').innerText = `R$ ${tFrete.toFixed(2)}`;
@@ -400,20 +401,21 @@
       if (saidas.length === 0) {
         lista.innerHTML = `
           <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl text-center text-xs text-slate-500">
-            Nenhuma saída cadastrada.
+            Nenhuma saída cadastrada na nuvem.
           </div>
         `;
       }
 
       saidas.forEach(s => {
-        totalLucro += s.lucro;
+        const fLucro = Number(s.lucro) || 0;
+        totalLucro += fLucro;
         lista.innerHTML += `
           <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
             <div class="space-y-1">
               <strong class="text-slate-200 text-sm block">${s.empresa}</strong>
               <span class="text-slate-500">${s.data ? s.data.split('-').reverse().join('/') : ''}</span>
               <div class="text-slate-400">
-                Frete: <span class="text-slate-300">R$ ${s.frete.toFixed(2)}</span> | Gastos: <span class="text-rose-400">R$ ${s.gastos.toFixed(2)}</span>
+                Frete: <span class="text-slate-300">R$ ${Number(s.frete).toFixed(2)}</span> | Gastos: <span class="text-rose-400">R$ ${Number(s.gastos).toFixed(2)}</span>
               </div>
               ${s.foto ? `
                 <button onclick="abrirModalFoto('${s.foto}')" class="text-[10px] text-sky-400 font-bold underline flex items-center gap-1 pt-1">
@@ -422,7 +424,7 @@
               ` : ''}
             </div>
             <div class="text-right space-y-2">
-              <span class="block font-bold text-sm ${s.lucro >= 0 ? 'text-emerald-400' : 'text-rose-500'}">R$ ${s.lucro.toFixed(2)}</span>
+              <span class="block font-bold text-sm ${fLucro >= 0 ? 'text-emerald-400' : 'text-rose-500'}">R$ ${fLucro.toFixed(2)}</span>
               <div class="flex gap-2 justify-end">
                 <button onclick="editarSaida(${s.id})" class="text-[10px] text-sky-400 underline font-bold">Editar</button>
                 <button onclick="excluirSaida(${s.id})" class="text-[10px] text-rose-500 underline font-bold">Excluir</button>
@@ -445,7 +447,7 @@
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
 
-    renderizar();
+    carregarDadosNuvem();
   </script>
 </body>
 </html>
