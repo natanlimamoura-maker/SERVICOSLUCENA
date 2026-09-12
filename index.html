@@ -14,9 +14,9 @@
   <!-- CSS (Tailwind via CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-12 font-sans antialiased selection:bg-sky-500 selection:text-white">
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-24 font-sans antialiased selection:bg-sky-500 selection:text-white">
 
-  <div class="max-w-md mx-auto space-y-5">
+  <div class="max-w-md mx-auto space-y-4">
     
     <!-- Cabeçalho -->
     <header class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -43,61 +43,207 @@
       </div>
     </div>
 
-    <!-- Formulário de Cadastro -->
-    <form id="formSaida" onsubmit="salvarSaida(event)" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
-      <h2 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2">➕ Nova Saída</h2>
+    <!-- Navegação por Abas -->
+    <div class="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-bold text-center">
+      <button id="btnAbaForm" onclick="mudarAba('form')" class="py-2.5 rounded-lg bg-sky-600 text-white transition">Nova Saída</button>
+      <button id="btnAbaHistorico" onclick="mudarAba('historico')" class="py-2.5 rounded-lg text-slate-400 hover:text-white transition">Histórico</button>
+      <button id="btnAbaBalanco" onclick="mudarAba('balanco')" class="py-2.5 rounded-lg text-slate-400 hover:text-white transition">Balanço</button>
+    </div>
 
-      <div>
-        <label class="block text-xs text-slate-400 mb-1">Empresa / Cliente</label>
-        <input type="text" id="empresa" placeholder="Ex: Transportadora X" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none focus:border-sky-500">
-      </div>
-
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-xs text-emerald-400 mb-1">Valor Frete (R$)</label>
-          <input type="number" step="0.01" id="frete" placeholder="0.00" oninput="calcularLucro()" required class="w-full bg-slate-950 border border-emerald-900/50 rounded-xl p-2.5 text-sm text-emerald-400 font-bold outline-none">
+    <!-- ABA 1: FORMULÁRIO DE CADASTRO / EDIÇÃO -->
+    <div id="abaForm">
+      <form id="formSaida" onsubmit="salvarSaida(event)" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <h2 id="tituloForm" class="text-sm font-bold text-slate-200">➕ Nova Saída</h2>
+          <button type="button" id="btnCancelarEdicao" onclick="cancelarEdicao()" class="hidden text-xs text-rose-400 underline">Cancelar Edição</button>
         </div>
+
+        <input type="hidden" id="editId" value="">
+
         <div>
-          <label class="block text-xs text-rose-400 mb-1">Combustível (R$)</label>
-          <input type="number" step="0.01" id="combustivel" placeholder="0.00" oninput="calcularLucro()" class="w-full bg-slate-950 border border-rose-900/50 rounded-xl p-2.5 text-sm text-rose-400 font-bold outline-none">
+          <label class="block text-xs text-slate-400 mb-1">Empresa / Cliente</label>
+          <input type="text" id="empresa" placeholder="Ex: Transportadora X" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none focus:border-sky-500">
         </div>
-      </div>
 
-      <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="block text-xs text-rose-400 mb-1">Pedágio (R$)</label>
-          <input type="number" step="0.01" id="pedagio" placeholder="0.00" oninput="calcularLucro()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none">
+          <label class="block text-xs text-slate-400 mb-1">Data</label>
+          <input type="date" id="dataSaida" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none text-slate-300 focus:border-sky-500">
         </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs text-emerald-400 mb-1">Valor Frete (R$)</label>
+            <input type="number" step="0.01" id="frete" placeholder="0.00" oninput="calcularLucro()" required class="w-full bg-slate-950 border border-emerald-900/50 rounded-xl p-2.5 text-sm text-emerald-400 font-bold outline-none">
+          </div>
+          <div>
+            <label class="block text-xs text-rose-400 mb-1">Combustível (R$)</label>
+            <input type="number" step="0.01" id="combustivel" placeholder="0.00" oninput="calcularLucro()" class="w-full bg-slate-950 border border-rose-900/50 rounded-xl p-2.5 text-sm text-rose-400 font-bold outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs text-rose-400 mb-1">Pedágio (R$)</label>
+            <input type="number" step="0.01" id="pedagio" placeholder="0.00" oninput="calcularLucro()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-xs text-rose-400 mb-1">Outros Gastos (R$)</label>
+            <input type="number" step="0.01" id="outros" placeholder="0.00" oninput="calcularLucro()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none">
+          </div>
+        </div>
+
+        <!-- Tirar Foto da Nota Fiscal -->
         <div>
-          <label class="block text-xs text-rose-400 mb-1">Outros Gastos (R$)</label>
-          <input type="number" step="0.01" id="outros" placeholder="0.00" oninput="calcularLucro()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none">
+          <label class="block text-xs text-slate-400 mb-1">Foto da Nota Fiscal / Comprovante</label>
+          <input type="file" id="fotoNota" accept="image/*" capture="environment" onchange="converterFoto(event)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-sky-600 file:text-white cursor-pointer">
+          <input type="hidden" id="fotoBase64" value="">
+          <div id="previewFotoContainer" class="hidden mt-2 flex items-center gap-2">
+            <img id="previewFoto" src="" class="w-12 h-12 object-cover rounded-lg border border-slate-700">
+            <span class="text-xs text-emerald-400">✓ Foto anexada</span>
+            <button type="button" onclick="removerFoto()" class="text-xs text-rose-500 underline ml-auto">Remover</button>
+          </div>
         </div>
-      </div>
 
-      <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
-        <span class="text-slate-400">Lucro Real Estimado:</span>
-        <span id="lucroPrevisto" class="text-sm font-extrabold text-emerald-400">R$ 0,00</span>
-      </div>
+        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
+          <span class="text-slate-400">Lucro Real Estimado:</span>
+          <span id="lucroPrevisto" class="text-sm font-extrabold text-emerald-400">R$ 0,00</span>
+        </div>
 
-      <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 font-bold py-3 rounded-xl text-sm transition">
-        Salvar Saída
-      </button>
-    </form>
+        <button type="submit" id="btnSalvar" class="w-full bg-sky-600 hover:bg-sky-500 font-bold py-3 rounded-xl text-sm transition">
+          Salvar Saída
+        </button>
+      </form>
+    </div>
 
-    <!-- Histórico -->
-    <div class="space-y-2">
-      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Histórico de Saídas</h3>
+    <!-- ABA 2: HISTÓRICO -->
+    <div id="abaHistorico" class="hidden space-y-2">
+      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Histórico de Lançamentos</h3>
       <div id="listaSaidas" class="space-y-2"></div>
+    </div>
+
+    <!-- ABA 3: BALANÇO DE GASTOS E LUCROS -->
+    <div id="abaBalanco" class="hidden space-y-3">
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
+        <h3 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2">📊 Resumo Geral das Saídas</h3>
+        
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="text-slate-400 block mb-1">Faturamento Bruto</span>
+            <strong id="balancoFrete" class="text-base text-emerald-400 font-extrabold">R$ 0,00</strong>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="text-slate-400 block mb-1">Total de Gastos</span>
+            <strong id="balancoGastos" class="text-base text-rose-400 font-extrabold">R$ 0,00</strong>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-2">
+          <span class="text-slate-400 font-bold block border-b border-slate-800 pb-1">Detalhamento dos Gastos:</span>
+          <div class="flex justify-between">
+            <span class="text-slate-400">⛽ Combustível:</span>
+            <strong id="balancoCombustivel" class="text-slate-200">R$ 0,00</strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">🛣️ Pedágios:</span>
+            <strong id="balancoPedagio" class="text-slate-200">R$ 0,00</strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">🔧 Outras Despesas:</span>
+            <strong id="balancoOutros" class="text-slate-200">R$ 0,00</strong>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs flex justify-between items-center">
+          <span class="text-slate-300 font-bold">Lucro Líquido Real:</span>
+          <strong id="balancoLucro" class="text-lg text-emerald-400 font-black">R$ 0,00</strong>
+        </div>
+      </div>
     </div>
 
   </div>
 
-  <!-- Lógica da Aplicação em JavaScript Puro -->
+  <!-- Modal para Visualização da Foto da Nota Fiscal -->
+  <div id="modalFoto" onclick="fecharModalFoto()" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+    <div class="relative max-w-sm w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden p-2">
+      <img id="imgModal" src="" class="w-full h-auto max-h-[80vh] object-contain rounded-xl">
+      <button onclick="fecharModalFoto()" class="w-full mt-2 bg-slate-800 text-slate-200 font-bold py-2 rounded-xl text-xs">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Lógica JavaScript Pure -->
   <script>
     let saidas = JSON.parse(localStorage.getItem('rodagem_saidas')) || [];
     let meta = parseFloat(localStorage.getItem('rodagem_meta')) || 15000;
 
+    // Define data padrão de hoje no input
+    document.getElementById('dataSaida').value = new Date().toISOString().split('T')[0];
     document.getElementById('metaValor').innerText = meta.toLocaleString('pt-BR');
+
+    function mudarAba(aba) {
+      document.getElementById('abaForm').classList.add('hidden');
+      document.getElementById('abaHistorico').classList.add('hidden');
+      document.getElementById('abaBalanco').classList.add('hidden');
+
+      const btnForm = document.getElementById('btnAbaForm');
+      const btnHist = document.getElementById('btnAbaHistorico');
+      const btnBal = document.getElementById('btnAbaBalanco');
+
+      [btnForm, btnHist, btnBal].forEach(b => {
+        b.className = 'py-2.5 rounded-lg text-slate-400 hover:text-white transition';
+      });
+
+      if (aba === 'form') {
+        document.getElementById('abaForm').classList.remove('hidden');
+        btnForm.className = 'py-2.5 rounded-lg bg-sky-600 text-white transition';
+      } else if (aba === 'historico') {
+        document.getElementById('abaHistorico').classList.remove('hidden');
+        btnHist.className = 'py-2.5 rounded-lg bg-sky-600 text-white transition';
+      } else if (aba === 'balanco') {
+        document.getElementById('abaBalanco').classList.remove('hidden');
+        btnBal.className = 'py-2.5 rounded-lg bg-sky-600 text-white transition';
+        atualizarBalanco();
+      }
+    }
+
+    function converterFoto(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = function (event) {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = function () {
+          const canvas = document.createElement('canvas');
+          const maxWidth = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressed = canvas.toDataURL('image/jpeg', 0.6);
+          document.getElementById('fotoBase64').value = compressed;
+          document.getElementById('previewFoto').src = compressed;
+          document.getElementById('previewFotoContainer').classList.remove('hidden');
+        };
+      };
+    }
+
+    function removerFoto() {
+      document.getElementById('fotoNota').value = '';
+      document.getElementById('fotoBase64').value = '';
+      document.getElementById('previewFoto').src = '';
+      document.getElementById('previewFotoContainer').classList.add('hidden');
+    }
 
     function calcularLucro() {
       const vFrete = parseFloat(document.getElementById('frete').value) || 0;
@@ -114,34 +260,89 @@
 
     function salvarSaida(e) {
       e.preventDefault();
+      const editId = document.getElementById('editId').value;
       const empresa = document.getElementById('empresa').value;
+      const data = document.getElementById('dataSaida').value;
       const frete = parseFloat(document.getElementById('frete').value) || 0;
       const combustivel = parseFloat(document.getElementById('combustivel').value) || 0;
       const pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
       const outros = parseFloat(document.getElementById('outros').value) || 0;
+      const foto = document.getElementById('fotoBase64').value;
       const lucro = frete - (combustivel + pedagio + outros);
 
-      const novaSaida = {
-        id: Date.now(),
-        empresa,
-        frete,
-        gastos: combustivel + pedagio + outros,
-        lucro,
-        data: new Date().toLocaleDateString('pt-BR')
-      };
+      if (editId) {
+        // Modo Edição
+        saidas = saidas.map(s => s.id == editId ? {
+          id: Number(editId), empresa, data, frete, combustivel, pedagio, outros, gastos: combustivel + pedagio + outros, lucro, foto
+        } : s);
+      } else {
+        // Novo Registro
+        const novaSaida = {
+          id: Date.now(), empresa, data, frete, combustivel, pedagio, outros, gastos: combustivel + pedagio + outros, lucro, foto
+        };
+        saidas.unshift(novaSaida);
+      }
 
-      saidas.unshift(novaSaida);
       localStorage.setItem('rodagem_saidas', JSON.stringify(saidas));
-      
-      document.getElementById('formSaida').reset();
-      document.getElementById('lucroPrevisto').innerText = 'R$ 0,00';
+      cancelarEdicao();
       renderizar();
+      mudarAba('historico');
+    }
+
+    function editarSaida(id) {
+      const s = saidas.find(item => item.id === id);
+      if (!s) return;
+
+      document.getElementById('editId').value = s.id;
+      document.getElementById('empresa').value = s.empresa;
+      document.getElementById('dataSaida').value = s.data || new Date().toISOString().split('T')[0];
+      document.getElementById('frete').value = s.frete;
+      document.getElementById('combustivel').value = s.combustivel || 0;
+      document.getElementById('pedagio').value = s.pedagio || 0;
+      document.getElementById('outros').value = s.outros || 0;
+
+      if (s.foto) {
+        document.getElementById('fotoBase64').value = s.foto;
+        document.getElementById('previewFoto').src = s.foto;
+        document.getElementById('previewFotoContainer').classList.remove('hidden');
+      } else {
+        removerFoto();
+      }
+
+      document.getElementById('tituloForm').innerText = '✏️ Editar Saída';
+      document.getElementById('btnSalvar').innerText = 'Atualizar Saída';
+      document.getElementById('btnCancelarEdicao').classList.remove('hidden');
+
+      calcularLucro();
+      mudarAba('form');
+    }
+
+    function cancelarEdicao() {
+      document.getElementById('editId').value = '';
+      document.getElementById('formSaida').reset();
+      document.getElementById('dataSaida').value = new Date().toISOString().split('T')[0];
+      document.getElementById('tituloForm').innerText = '➕ Nova Saída';
+      document.getElementById('btnSalvar').innerText = 'Salvar Saída';
+      document.getElementById('btnCancelarEdicao').classList.add('hidden');
+      removerFoto();
+      calcularLucro();
     }
 
     function excluirSaida(id) {
-      saidas = saidas.filter(s => s.id !== id);
-      localStorage.setItem('rodagem_saidas', JSON.stringify(saidas));
-      renderizar();
+      if (confirm('Deseja realmente excluir esta saída?')) {
+        saidas = saidas.filter(s => s.id !== id);
+        localStorage.setItem('rodagem_saidas', JSON.stringify(saidas));
+        renderizar();
+      }
+    }
+
+    function abrirModalFoto(src) {
+      document.getElementById('imgModal').src = src;
+      document.getElementById('modalFoto').classList.remove('hidden');
+    }
+
+    function fecharModalFoto() {
+      document.getElementById('modalFoto').classList.add('hidden');
     }
 
     function definirMeta() {
@@ -154,26 +355,65 @@
       }
     }
 
+    function atualizarBalanco() {
+      let tFrete = 0, tGastos = 0, tCombustivel = 0, tPedagio = 0, tOutros = 0, tLucro = 0;
+
+      saidas.forEach(s => {
+        tFrete += s.frete || 0;
+        tGastos += s.gastos || 0;
+        tCombustivel += s.combustivel || 0;
+        tPedagio += s.pedagio || 0;
+        tOutros += s.outros || 0;
+        tLucro += s.lucro || 0;
+      });
+
+      document.getElementById('balancoFrete').innerText = `R$ ${tFrete.toFixed(2)}`;
+      document.getElementById('balancoGastos').innerText = `R$ ${tGastos.toFixed(2)}`;
+      document.getElementById('balancoCombustivel').innerText = `R$ ${tCombustivel.toFixed(2)}`;
+      document.getElementById('balancoPedagio').innerText = `R$ ${tPedagio.toFixed(2)}`;
+      document.getElementById('balancoOutros').innerText = `R$ ${tOutros.toFixed(2)}`;
+      
+      const elLucro = document.getElementById('balancoLucro');
+      elLucro.innerText = `R$ ${tLucro.toFixed(2)}`;
+      elLucro.className = `text-lg font-black ${tLucro >= 0 ? 'text-emerald-400' : 'text-rose-500'}`;
+    }
+
     function renderizar() {
       const lista = document.getElementById('listaSaidas');
       lista.innerHTML = '';
 
       let totalLucro = 0;
 
+      if (saidas.length === 0) {
+        lista.innerHTML = `
+          <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl text-center text-xs text-slate-500">
+            Nenhuma saída cadastrada.
+          </div>
+        `;
+      }
+
       saidas.forEach(s => {
         totalLucro += s.lucro;
         lista.innerHTML += `
           <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
-            <div>
+            <div class="space-y-1">
               <strong class="text-slate-200 text-sm block">${s.empresa}</strong>
-              <span class="text-slate-500">${s.data}</span>
-              <div class="text-slate-400 mt-1">
+              <span class="text-slate-500">${s.data ? s.data.split('-').reverse().join('/') : ''}</span>
+              <div class="text-slate-400">
                 Frete: <span class="text-slate-300">R$ ${s.frete.toFixed(2)}</span> | Gastos: <span class="text-rose-400">R$ ${s.gastos.toFixed(2)}</span>
               </div>
+              ${s.foto ? `
+                <button onclick="abrirModalFoto('${s.foto}')" class="text-[10px] text-sky-400 font-bold underline flex items-center gap-1 pt-1">
+                  📸 Ver Nota Fiscal
+                </button>
+              ` : ''}
             </div>
-            <div class="text-right space-y-1">
+            <div class="text-right space-y-2">
               <span class="block font-bold text-sm ${s.lucro >= 0 ? 'text-emerald-400' : 'text-rose-500'}">R$ ${s.lucro.toFixed(2)}</span>
-              <button onclick="excluirSaida(${s.id})" class="text-[10px] text-rose-500 underline">Excluir</button>
+              <div class="flex gap-2 justify-end">
+                <button onclick="editarSaida(${s.id})" class="text-[10px] text-sky-400 underline font-bold">Editar</button>
+                <button onclick="excluirSaida(${s.id})" class="text-[10px] text-rose-500 underline font-bold">Excluir</button>
+              </div>
             </div>
           </div>
         `;
@@ -184,9 +424,10 @@
       const porc = Math.min(Math.round((totalLucro / meta) * 100), 100);
       document.getElementById('metaPorcentagem').innerText = `${porc}%`;
       document.getElementById('barraProgresso').style.width = `${Math.max(porc, 0)}%`;
+
+      atualizarBalanco();
     }
 
-    // Registrar Service Worker para PWA Offline
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
