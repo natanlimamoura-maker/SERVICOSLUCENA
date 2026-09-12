@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rodagempro-v1';
+const CACHE_NAME = 'rodagempro-v2';
 const ASSETS = [
   '/',
   '/index.html',
