@@ -41,7 +41,7 @@
     </form>
   </div>
 
-  <!-- TELA PRINCIPAL DO APP (ESCONDIDA ATÉ LOGAR) -->
+  <!-- TELA PRINCIPAL DO APP -->
   <div id="telaApp" class="hidden max-w-md mx-auto space-y-4">
     
     <!-- Cabeçalho -->
@@ -123,10 +123,11 @@
           </div>
         </div>
 
+        <!-- SEÇÃO DE COMPROVANTE COM CÂMERA E GALERIA -->
         <div>
           <label class="block text-xs text-slate-400 mb-1">Comprovante / Nota Fiscal</label>
-          <input type="file" id="inputCamera" accept="image/*" capture="environment" onchange="converterFoto(event)" class="hidden">
-          <input type="file" id="inputGaleria" accept="image/*" onchange="converterFoto(event)" class="hidden">
+          <input type="file" id="inputCamera" accept="image/*" capture="environment" onchange="processarFoto(event)" class="hidden">
+          <input type="file" id="inputGaleria" accept="image/*" onchange="processarFoto(event)" class="hidden">
           <input type="hidden" id="fotoBase64" value="">
 
           <div class="grid grid-cols-2 gap-2">
@@ -134,9 +135,16 @@
             <button type="button" onclick="document.getElementById('inputGaleria').click()" class="bg-slate-950 border border-slate-800 hover:border-sky-500 text-slate-300 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">🖼️ Galeria</button>
           </div>
 
+          <div id="statusCarregandoFoto" class="hidden mt-2 text-xs text-sky-400 text-center font-medium animate-pulse">
+            ⚡ Otimizando foto...
+          </div>
+
           <div id="previewFotoContainer" class="hidden mt-2 flex items-center gap-2 bg-slate-950 border border-slate-800 p-2 rounded-xl">
-            <img id="previewFoto" src="" class="w-10 h-10 object-cover rounded-lg border border-slate-700">
-            <span class="text-xs text-emerald-400 font-medium">✓ Foto anexada</span>
+            <img id="previewFoto" src="" class="w-12 h-12 object-cover rounded-lg border border-slate-700">
+            <div class="flex flex-col">
+              <span class="text-xs text-emerald-400 font-bold">✓ Foto anexada</span>
+              <span class="text-[10px] text-slate-400">Pronta para envio</span>
+            </div>
             <button type="button" onclick="removerFoto()" class="text-xs text-rose-500 underline ml-auto font-medium">Remover</button>
           </div>
         </div>
@@ -187,7 +195,7 @@
 
   <!-- Modal Foto -->
   <div id="modalFoto" onclick="fecharModalFoto()" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-    <div class="relative max-w-sm w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden p-2">
+    <div class="relative max-w-sm w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden p-2" onclick="event.stopPropagation()">
       <img id="imgModal" src="" class="w-full h-auto max-h-[80vh] object-contain rounded-xl">
       <button onclick="fecharModalFoto()" class="w-full mt-2 bg-slate-800 text-slate-200 font-bold py-2 rounded-xl text-xs">Fechar</button>
     </div>
@@ -212,7 +220,6 @@
 
       if (!nome || !pin) return;
 
-      // Busca usuário pelo nome
       const { data: usuario, error } = await _supabase
         .from('usuarios')
         .select('*')
@@ -220,14 +227,12 @@
         .single();
 
       if (usuario) {
-        // Usuário existe, valida PIN
         if (usuario.pin === pin) {
           iniciarSessao(usuario);
         } else {
           alert('PIN incorreto para este usuário!');
         }
       } else {
-        // Usuário não existe, cria novo cadastro automaticamente
         const { data: novoUsuario, error: errorCriar } = await _supabase
           .from('usuarios')
           .insert([{ nome, pin }])
@@ -261,7 +266,6 @@
     async function carregarDadosNuvem() {
       if (!usuarioAtual) return;
       
-      // Busca APENAS as saídas vinculadas ao usuario_id logado
       const { data, error } = await _supabase
         .from('saidas')
         .select('*')
@@ -298,25 +302,22 @@
       }
     }
 
-    function converterFoto(e) {
+    // COMPACTADOR E PROCESSADOR UNIVERSAL DE IMAGENS
+    function processarFoto(e) {
       const file = e.target.files[0];
       if (!file) return;
 
-      if (!file.type.startsWith('image/')) {
-        alert('Selecione uma imagem válida.');
-        return;
-      }
+      document.getElementById('statusCarregandoFoto').classList.remove('hidden');
 
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = function (event) {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
         img.src = event.target.result;
         
         img.onload = function () {
           const canvas = document.createElement('canvas');
-          const maxWidth = 1000;
+          const maxWidth = 1000; // Largura máxima ideal para recibos
           let width = img.width;
           let height = img.height;
 
@@ -330,9 +331,12 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          // Compacta para JPEG com qualidade 0.65 (super leve e legível)
+          const compressed = canvas.toDataURL('image/jpeg', 0.65);
+          
           document.getElementById('fotoBase64').value = compressed;
           document.getElementById('previewFoto').src = compressed;
+          document.getElementById('statusCarregandoFoto').classList.add('hidden');
           document.getElementById('previewFotoContainer').classList.remove('hidden');
         };
       };
@@ -362,6 +366,10 @@
     async function salvarSaida(e) {
       e.preventDefault();
       if (!usuarioAtual) return;
+
+      const btnSalvar = document.getElementById('btnSalvar');
+      btnSalvar.innerText = "Enviando para a Nuvem...";
+      btnSalvar.disabled = true;
 
       const editId = document.getElementById('editId').value;
       const empresa = document.getElementById('empresa').value;
@@ -393,6 +401,9 @@
         payload.id = Date.now();
         await _supabase.from('saidas').insert([payload]);
       }
+
+      btnSalvar.innerText = "Salvar na Nuvem";
+      btnSalvar.disabled = false;
 
       cancelarEdicao();
       await carregarDadosNuvem();
@@ -514,7 +525,7 @@
               </div>
               ${s.foto ? `
                 <button onclick="abrirModalFoto('${s.foto}')" class="text-[10px] text-sky-400 font-bold underline flex items-center gap-1 pt-1">
-                  📸 Ver Nota Fiscal
+                  📸 Ver Nota Fiscal / Comprovante
                 </button>
               ` : ''}
             </div>
@@ -542,7 +553,6 @@
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
 
-    // Auto-login se já estiver salvo no navegador
     if (usuarioAtual) {
       iniciarSessao(usuarioAtual);
     }
