@@ -1,22 +1,197 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark h-full bg-slate-950">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>RodagemPro - Controle de Fretes e Saídas</title>
-    <meta name="description" content="Aplicativo de controle financeiro para caminhoneiros. Registre fretes, combustível, pedágios, notas fiscais e acompanhe seu lucro real." />
-    <meta name="theme-color" content="#0284c7" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="RodagemPro" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  </head>
-  <body class="h-full bg-slate-950 text-slate-100 antialiased">
-    <div id="root" class="min-h-full flex flex-col"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RodagemPro - Controle de Saídas</title>
+
+  <!-- PWA & Mobile -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- CSS (Tailwind via CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-12 font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+  <div class="max-w-md mx-auto space-y-5">
+    
+    <!-- Cabeçalho -->
+    <header class="flex justify-between items-center border-b border-slate-800 pb-3">
+      <div>
+        <h1 class="text-xl font-black text-sky-400 tracking-tight">🚚 RodagemPro</h1>
+        <p class="text-xs text-slate-400">Controle de Saídas & Lucro Real</p>
+      </div>
+      <button onclick="definirMeta()" class="bg-slate-900 border border-slate-800 text-sky-400 text-xs px-3 py-1.5 rounded-xl font-medium">
+        🎯 Meta: R$ <span id="metaValor">15000</span>
+      </button>
+    </header>
+
+    <!-- Barra de Progresso da Meta -->
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2">
+      <div class="flex justify-between text-xs">
+        <span class="text-slate-400">Progresso da Meta Mensal</span>
+        <span id="metaPorcentagem" class="font-bold text-sky-400">0%</span>
+      </div>
+      <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800/80">
+        <div id="barraProgresso" class="bg-sky-500 h-full w-0 transition-all duration-500"></div>
+      </div>
+      <div class="flex justify-between text-xs pt-1">
+        <span class="text-slate-400">Acumulado: <strong id="totalLucro" class="text-emerald-400">R$ 0,00</strong></span>
+      </div>
+    </div>
+
+    <!-- Formulário de Cadastro -->
+    <form id="formSaida" onsubmit="salvarSaida(event)" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
+      <h2 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2">➕ Nova Saída</h2>
+
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Empresa / Cliente</label>
+        <input type="text" id="empresa" placeholder="Ex: Transportadora X" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none focus:border-sky-500">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs text-emerald-400 mb-1">Valor Frete (R$)</label>
+          <input type="number" step="0.01" id="frete" placeholder="0.00" oninput="calcularLucro()" required class="w-full bg-slate-950 border border-emerald-900/50 rounded-xl p-2.5 text-sm text-emerald-400 font-bold outline-none">
+        </div>
+        <div>
+          <label class="block text-xs text-rose-400 mb-1">Combustível (R$)</label>
+          <input type="number" step="0.01" id="combustivel" placeholder="0.00" oninput="calcularLucro()" class="w-full bg-slate-950 border border-rose-900/50 rounded-xl p-2.5 text-sm text-rose-400 font-bold outline-none">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs text-rose-400 mb-1">Pedágio (R$)</label>
+          <input type="number" step="0.01" id="pedagio" placeholder="0.00" oninput="calcularLucro()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none">
+        </div>
+        <div>
+          <label class="block text-xs text-rose-400 mb-1">Outros Gastos (R$)</label>
+          <input type="number" step="0.01" id="outros" placeholder="0.00" oninput="calcularLucro()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm outline-none">
+        </div>
+      </div>
+
+      <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
+        <span class="text-slate-400">Lucro Real Estimado:</span>
+        <span id="lucroPrevisto" class="text-sm font-extrabold text-emerald-400">R$ 0,00</span>
+      </div>
+
+      <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 font-bold py-3 rounded-xl text-sm transition">
+        Salvar Saída
+      </button>
+    </form>
+
+    <!-- Histórico -->
+    <div class="space-y-2">
+      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Histórico de Saídas</h3>
+      <div id="listaSaidas" class="space-y-2"></div>
+    </div>
+
+  </div>
+
+  <!-- Lógica da Aplicação em JavaScript Puro -->
+  <script>
+    let saidas = JSON.parse(localStorage.getItem('rodagem_saidas')) || [];
+    let meta = parseFloat(localStorage.getItem('rodagem_meta')) || 15000;
+
+    document.getElementById('metaValor').innerText = meta.toLocaleString('pt-BR');
+
+    function calcularLucro() {
+      const vFrete = parseFloat(document.getElementById('frete').value) || 0;
+      const vCombustivel = parseFloat(document.getElementById('combustivel').value) || 0;
+      const vPedagio = parseFloat(document.getElementById('pedagio').value) || 0;
+      const vOutros = parseFloat(document.getElementById('outros').value) || 0;
+
+      const lucro = vFrete - (vCombustivel + vPedagio + vOutros);
+      const elLucro = document.getElementById('lucroPrevisto');
+      elLucro.innerText = `R$ ${lucro.toFixed(2)}`;
+      elLucro.className = `text-sm font-extrabold ${lucro >= 0 ? 'text-emerald-400' : 'text-rose-500'}`;
+      return lucro;
+    }
+
+    function salvarSaida(e) {
+      e.preventDefault();
+      const empresa = document.getElementById('empresa').value;
+      const frete = parseFloat(document.getElementById('frete').value) || 0;
+      const combustivel = parseFloat(document.getElementById('combustivel').value) || 0;
+      const pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
+      const outros = parseFloat(document.getElementById('outros').value) || 0;
+      const lucro = frete - (combustivel + pedagio + outros);
+
+      const novaSaida = {
+        id: Date.now(),
+        empresa,
+        frete,
+        gastos: combustivel + pedagio + outros,
+        lucro,
+        data: new Date().toLocaleDateString('pt-BR')
+      };
+
+      saidas.unshift(novaSaida);
+      localStorage.setItem('rodagem_saidas', JSON.stringify(saidas));
+      
+      document.getElementById('formSaida').reset();
+      document.getElementById('lucroPrevisto').innerText = 'R$ 0,00';
+      renderizar();
+    }
+
+    function excluirSaida(id) {
+      saidas = saidas.filter(s => s.id !== id);
+      localStorage.setItem('rodagem_saidas', JSON.stringify(saidas));
+      renderizar();
+    }
+
+    function definirMeta() {
+      const novaMeta = prompt('Digite o valor da sua meta mensal (R$):', meta);
+      if (novaMeta) {
+        meta = parseFloat(novaMeta) || 15000;
+        localStorage.setItem('rodagem_meta', meta);
+        document.getElementById('metaValor').innerText = meta.toLocaleString('pt-BR');
+        renderizar();
+      }
+    }
+
+    function renderizar() {
+      const lista = document.getElementById('listaSaidas');
+      lista.innerHTML = '';
+
+      let totalLucro = 0;
+
+      saidas.forEach(s => {
+        totalLucro += s.lucro;
+        lista.innerHTML += `
+          <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
+            <div>
+              <strong class="text-slate-200 text-sm block">${s.empresa}</strong>
+              <span class="text-slate-500">${s.data}</span>
+              <div class="text-slate-400 mt-1">
+                Frete: <span class="text-slate-300">R$ ${s.frete.toFixed(2)}</span> | Gastos: <span class="text-rose-400">R$ ${s.gastos.toFixed(2)}</span>
+              </div>
+            </div>
+            <div class="text-right space-y-1">
+              <span class="block font-bold text-sm ${s.lucro >= 0 ? 'text-emerald-400' : 'text-rose-500'}">R$ ${s.lucro.toFixed(2)}</span>
+              <button onclick="excluirSaida(${s.id})" class="text-[10px] text-rose-500 underline">Excluir</button>
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('totalLucro').innerText = `R$ ${totalLucro.toFixed(2)}`;
+      
+      const porc = Math.min(Math.round((totalLucro / meta) * 100), 100);
+      document.getElementById('metaPorcentagem').innerText = `${porc}%`;
+      document.getElementById('barraProgresso').style.width = `${Math.max(porc, 0)}%`;
+    }
+
+    // Registrar Service Worker para PWA Offline
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+
+    renderizar();
+  </script>
+</body>
 </html>
