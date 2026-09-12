@@ -1,423 +1,82 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle de Entrada de Peças e Serviços</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+<html lang="pt-BR" class="dark h-full bg-slate-950">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- Título & Metadados -->
+    <title>RodagemPro - Controle de Fretes e Saídas</title>
+    <meta name="description" content="Aplicativo de controle financeiro para caminhoneiros. Registre fretes, combustível, pedágios, comprovantes e acompanhe seu lucro real." />
+    <meta name="author" content="RodagemPro" />
 
-    body {
-      background-color: #f4f6f9;
-      color: #333;
-      padding: 20px;
-    }
+    <!-- Cores de Tema & Status Bar (Mobile Nativo) -->
+    <meta name="theme-color" content="#0284c7" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="RodagemPro" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
+    <!-- Ícones PWA e Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.json" />
 
-    header {
-      margin-bottom: 25px;
-      text-align: center;
-    }
+    <!-- Fontes Google (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-    header h1 {
-      color: #1a252f;
-      font-size: 1.8rem;
-    }
-
-    .card {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-      margin-bottom: 25px;
-    }
-
-    .card h2 {
-      font-size: 1.2rem;
-      margin-bottom: 15px;
-      color: #2c3e50;
-      border-bottom: 2px solid #ecf0f1;
-      padding-bottom: 8px;
-    }
-
-    form {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 15px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .form-group label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 5px;
-      color: #555;
-    }
-
-    .form-group input, 
-    .form-group select, 
-    .form-group textarea {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 0.95rem;
-      outline: none;
-    }
-
-    .form-group input:focus, 
-    .form-group select:focus, 
-    .form-group textarea:focus {
-      border-color: #3498db;
-    }
-
-    .full-width {
-      grid-column: 1 / -1;
-    }
-
-    .btn-submit {
-      background-color: #27ae60;
-      color: white;
-      border: none;
-      padding: 12px;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.2s;
-    }
-
-    .btn-submit:hover {
-      background-color: #219150;
-    }
-
-    .search-bar {
-      margin-bottom: 15px;
-    }
-
-    .search-bar input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 0.95rem;
-    }
-
-    .table-responsive {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-    }
-
-    th, td {
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid #eef2f5;
-      font-size: 0.9rem;
-    }
-
-    th {
-      background-color: #f8f9fa;
-      color: #495057;
-      font-weight: 600;
-    }
-
-    .badge {
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      text-transform: uppercase;
-      display: inline-block;
-    }
-
-    .badge-pendente {
-      background-color: #fff3cd;
-      color: #856404;
-    }
-
-    .badge-finalizado {
-      background-color: #d4edda;
-      color: #155724;
-    }
-
-    .actions {
-      display: flex;
-      gap: 5px;
-    }
-
-    .btn-action {
-      border: none;
-      padding: 6px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-
-    .btn-status {
-      background-color: #3498db;
-      color: white;
-    }
-
-    .btn-edit {
-      background-color: #f39c12;
-      color: white;
-    }
-
-    .btn-delete {
-      background-color: #e74c3c;
-      color: white;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 20px;
-      color: #777;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <header>
-      <h1>Controle de Entrada de Peças & Serviços</h1>
-    </header>
-
-    <!-- FORMULÁRIO -->
-    <div class="card">
-      <h2 id="form-title">Novo Registro de Peça</h2>
-      <form id="peca-form">
-        <input type="hidden" id="peca-id">
-
-        <div class="form-group">
-          <label for="nomePeca">Nome da Peça / Código *</label>
-          <input type="text" id="nomePeca" required placeholder="Ex: Bico Injetor, Módulo...">
-        </div>
-
-        <div class="form-group">
-          <label for="cliente">Cliente / Empresa *</label>
-          <input type="text" id="cliente" required placeholder="Nome do cliente ou empresa">
-        </div>
-
-        <div class="form-group">
-          <label for="dataEntrada">Data de Entrada *</label>
-          <input type="date" id="dataEntrada" required>
-        </div>
-
-        <div class="form-group">
-          <label for="dataSaida">Previsão / Data de Saída</label>
-          <input type="date" id="dataSaida">
-        </div>
-
-        <div class="form-group">
-          <label for="status">Status do Serviço</label>
-          <select id="status">
-            <option value="Em Andamento">Em Andamento</option>
-            <option value="Finalizado">Finalizado</option>
-          </select>
-        </div>
-
-        <div class="form-group full-width">
-          <label for="servico">Tipo de Serviço Realizado *</label>
-          <textarea id="servico" rows="2" required placeholder="Descreva o serviço a ser feito ou realizado..."></textarea>
-        </div>
-
-        <div class="form-group full-width">
-          <button type="submit" class="btn-submit" id="btn-save">Salvar Registro</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- LISTAGEM -->
-    <div class="card">
-      <h2>Serviços Registrados</h2>
-      <div class="search-bar">
-        <input type="text" id="search" placeholder="Buscar por peça, cliente ou serviço..." onkeyup="renderizarTabela()">
-      </div>
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr>
-              <th>Peça</th>
-              <th>Cliente</th>
-              <th>Entrada</th>
-              <th>Saída</th>
-              <th>Serviço Feito</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tabela-corpo">
-            <!-- Linhas inseridas via JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let pecas = JSON.parse(localStorage.getItem('controle_pecas_db')) || [];
-
-    // Preenche a data de entrada com o dia atual por padrão
-    document.getElementById('dataEntrada').valueAsDate = new Date();
-
-    const form = document.getElementById('peca-form');
-
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const id = document.getElementById('peca-id').value;
-      const nomePeca = document.getElementById('nomePeca').value;
-      const cliente = document.getElementById('cliente').value;
-      const dataEntrada = document.getElementById('dataEntrada').value;
-      const dataSaida = document.getElementById('dataSaida').value;
-      const status = document.getElementById('status').value;
-      const servico = document.getElementById('servico').value;
-
-      if (id) {
-        // Edição
-        const index = pecas.findIndex(p => p.id == id);
-        pecas[index] = { id: Number(id), nomePeca, cliente, dataEntrada, dataSaida, status, servico };
-      } else {
-        // Novo cadastro
-        const novoRegistro = {
-          id: Date.now(),
-          nomePeca,
-          cliente,
-          dataEntrada,
-          dataSaida,
-          status,
-          servico
-        };
-        pecas.push(novoRegistro);
-      }
-
-      salvarDados();
-      resetarFormulario();
-      renderizarTabela();
-    });
-
-    function salvarDados() {
-      localStorage.setItem('controle_pecas_db', JSON.stringify(pecas));
-    }
-
-    function formatarData(dataISO) {
-      if (!dataISO) return '-';
-      const partes = dataISO.split('-');
-      return `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-
-    function renderizarTabela() {
-      const tbody = document.getElementById('tabela-corpo');
-      const termoBusca = document.getElementById('search').value.toLowerCase();
-      tbody.innerHTML = '';
-
-      const pecasFiltradas = pecas.filter(p => 
-        p.nomePeca.toLowerCase().includes(termoBusca) ||
-        p.cliente.toLowerCase().includes(termoBusca) ||
-        p.servico.toLowerCase().includes(termoBusca)
-      );
-
-      if (pecasFiltradas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Nenhum registro encontrado.</td></tr>`;
-        return;
-      }
-
-      // Ordenar: Em andamento primeiro
-      pecasFiltradas.sort((a, b) => (a.status === 'Finalizado') - (b.status === 'Finalizado'));
-
-      pecasFiltradas.forEach(p => {
-        const isFinalizado = p.status === 'Finalizado';
-        const badgeClass = isFinalizado ? 'badge-finalizado' : 'badge-pendente';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${p.nomePeca}</strong></td>
-          <td>${p.cliente}</td>
-          <td>${formatarData(p.dataEntrada)}</td>
-          <td>${formatarData(p.dataSaida)}</td>
-          <td>${p.servico}</td>
-          <td><span class="badge ${badgeClass}">${p.status}</span></td>
-          <td class="actions">
-            <button class="btn-action btn-status" onclick="alternarStatus(${p.id})" title="Mudar Status">
-              ${isFinalizado ? 'Reabrir' : 'Concluir'}
-            </button>
-            <button class="btn-action btn-edit" onclick="editarRegistro(${p.id})">Editar</button>
-            <button class="btn-action btn-delete" onclick="removerRegistro(${p.id})">Excluir</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function alternarStatus(id) {
-      const index = pecas.findIndex(p => p.id === id);
-      if (index !== -1) {
-        if (pecas[index].status === 'Em Andamento') {
-          pecas[index].status = 'Finalizado';
-          // Se não houver data de saída ao finalizar, preenche automaticamente com o dia atual
-          if (!pecas[index].dataSaida) {
-            pecas[index].dataSaida = new Date().toISOString().split('T')[0];
+    <!-- Tailwind CSS (Suporte rápido para estilos utilitários) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#f0f9ff',
+                100: '#e0f2fe',
+                500: '#0ea5e9',
+                600: '#0284c7',
+                700: '#0369a1',
+                900: '#0c4a6e',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            }
           }
-        } else {
-          pecas[index].status = 'Em Andamento';
         }
-        salvarDados();
-        renderizarTabela();
       }
-    }
+    </script>
 
-    function editarRegistro(id) {
-      const p = pecas.find(p => p.id === id);
-      if (p) {
-        document.getElementById('peca-id').value = p.id;
-        document.getElementById('nomePeca').value = p.nomePeca;
-        document.getElementById('cliente').value = p.cliente;
-        document.getElementById('dataEntrada').value = p.dataEntrada;
-        document.getElementById('dataSaida').value = p.dataSaida || '';
-        document.getElementById('status').value = p.status;
-        document.getElementById('servico').value = p.servico;
-
-        document.getElementById('form-title').innerText = 'Editar Registro';
-        document.getElementById('btn-save').innerText = 'Atualizar Registro';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    <!-- Prevenção de Pinch-Zoom acidental em formulários mobile -->
+    <style>
+      body {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        font-family: 'Inter', sans-serif;
       }
-    }
-
-    function removerRegistro(id) {
-      if (confirm('Tem certeza que deseja excluir este registro?')) {
-        pecas = pecas.filter(p => p.id !== id);
-        salvarDados();
-        renderizarTabela();
+      /* Estilização da barra de rolagem para telas sensíveis ao toque */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
       }
-    }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 9999px;
+      }
+    </style>
+  </head>
+  <body class="h-full bg-slate-950 text-slate-100 antialiased selection:bg-sky-500 selection:text-white">
+    <!-- Elemento Raiz do React -->
+    <div id="root" class="min-h-full flex flex-col"></div>
 
-    function resetarFormulario() {
-      form.reset();
-      document.getElementById('peca-id').value = '';
-      document.getElementById('dataEntrada').valueAsDate = new Date();
-      document.getElementById('form-title').innerText = 'Novo Registro de Peça';
-      document.getElementById('btn-save').innerText = 'Salvar Registro';
-    }
-
-    // Carregamento inicial da tabela
-    renderizarTabela();
-  </script>
-</body>
+    <!-- Script de Entrada Principal do Vite/React -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
