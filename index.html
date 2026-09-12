@@ -17,19 +17,47 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-24 font-sans antialiased selection:bg-sky-500 selection:text-white">
 
-  <div class="max-w-md mx-auto space-y-4">
+  <!-- TELA DE LOGIN POR PIN -->
+  <div id="telaLogin" class="max-w-md mx-auto pt-12 space-y-6">
+    <div class="text-center space-y-2">
+      <h1 class="text-3xl font-black text-sky-400 tracking-tight">🚚 RodagemPro</h1>
+      <p class="text-xs text-slate-400">Controle de Saídas em Nuvem</p>
+    </div>
+
+    <form onsubmit="autenticarUsuario(event)" class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+      <h2 class="text-sm font-bold text-slate-200 text-center border-b border-slate-800 pb-3">Entrar ou Criar Perfil</h2>
+      
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Seu Nome / Apelido</label>
+        <input type="text" id="loginNome" placeholder="Ex: Carlos" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm outline-none focus:border-sky-500 text-slate-100">
+      </div>
+
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">PIN de Segurança (4 a 6 dígitos)</label>
+        <input type="password" maxlength="6" id="loginPin" placeholder="****" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center tracking-[0.5em] text-lg outline-none focus:border-sky-500 text-slate-100">
+      </div>
+
+      <button type="submit" id="btnEntrar" class="w-full bg-sky-600 hover:bg-sky-500 font-bold py-3 rounded-xl text-sm transition">Acessar Meu Painel</button>
+    </form>
+  </div>
+
+  <!-- TELA PRINCIPAL DO APP (ESCONDIDA ATÉ LOGAR) -->
+  <div id="telaApp" class="hidden max-w-md mx-auto space-y-4">
     
     <!-- Cabeçalho -->
     <header class="flex justify-between items-center border-b border-slate-800 pb-3">
       <div>
         <h1 class="text-xl font-black text-sky-400 tracking-tight flex items-center gap-2">
-          🚚 RodagemPro <span id="statusNuvem" class="text-[10px] bg-emerald-900/80 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full">Online</span>
+          🚚 RodagemPro
         </h1>
-        <p class="text-xs text-slate-400">Controle de Saídas & Lucro Real</p>
+        <p class="text-xs text-slate-400">Motorista: <span id="usuarioNome" class="text-sky-300 font-bold"></span></p>
       </div>
-      <button onclick="definirMeta()" class="bg-slate-900 border border-slate-800 text-sky-400 text-xs px-3 py-1.5 rounded-xl font-medium">
-        🎯 Meta: R$ <span id="metaValor">15000</span>
-      </button>
+      <div class="flex items-center gap-2">
+        <button onclick="definirMeta()" class="bg-slate-900 border border-slate-800 text-sky-400 text-xs px-2.5 py-1.5 rounded-xl font-medium">
+          🎯 Meta: R$ <span id="metaValor">15000</span>
+        </button>
+        <button onclick="sair()" class="bg-rose-950 border border-rose-900 text-rose-300 text-xs px-2 py-1.5 rounded-xl font-medium">Sair</button>
+      </div>
     </header>
 
     <!-- Progresso da Meta Mensal -->
@@ -95,7 +123,6 @@
           </div>
         </div>
 
-        <!-- Anexo de Fotos: Câmera ou Galeria (Qualquer tipo de foto) -->
         <div>
           <label class="block text-xs text-slate-400 mb-1">Comprovante / Nota Fiscal</label>
           <input type="file" id="inputCamera" accept="image/*" capture="environment" onchange="converterFoto(event)" class="hidden">
@@ -158,7 +185,7 @@
 
   </div>
 
-  <!-- Modal para Exibição da Nota Fiscal/Comprovante -->
+  <!-- Modal Foto -->
   <div id="modalFoto" onclick="fecharModalFoto()" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
     <div class="relative max-w-sm w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden p-2">
       <img id="imgModal" src="" class="w-full h-auto max-h-[80vh] object-contain rounded-xl">
@@ -167,19 +194,80 @@
   </div>
 
   <script>
-    // CONFIGURAÇÃO EXCLUSIVA DO SUPABASE DO SEU AMIGO
     const SUPABASE_URL = 'https://ghglggsrhuognugszjev.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_RkjFKJJUOn3EFcRUFsXhOw_PvZmoiHo';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let usuarioAtual = JSON.parse(localStorage.getItem('rodagem_usuario')) || null;
     let saidas = [];
     let meta = parseFloat(localStorage.getItem('rodagem_meta')) || 15000;
 
     document.getElementById('dataSaida').value = new Date().toISOString().split('T')[0];
     document.getElementById('metaValor').innerText = meta.toLocaleString('pt-BR');
 
+    async function autenticarUsuario(e) {
+      e.preventDefault();
+      const nome = document.getElementById('loginNome').value.trim();
+      const pin = document.getElementById('loginPin').value.trim();
+
+      if (!nome || !pin) return;
+
+      // Busca usuário pelo nome
+      const { data: usuario, error } = await _supabase
+        .from('usuarios')
+        .select('*')
+        .eq('nome', nome)
+        .single();
+
+      if (usuario) {
+        // Usuário existe, valida PIN
+        if (usuario.pin === pin) {
+          iniciarSessao(usuario);
+        } else {
+          alert('PIN incorreto para este usuário!');
+        }
+      } else {
+        // Usuário não existe, cria novo cadastro automaticamente
+        const { data: novoUsuario, error: errorCriar } = await _supabase
+          .from('usuarios')
+          .insert([{ nome, pin }])
+          .select()
+          .single();
+
+        if (novoUsuario) {
+          iniciarSessao(novoUsuario);
+        } else {
+          alert('Erro ao criar perfil. Tente novamente.');
+        }
+      }
+    }
+
+    function iniciarSessao(usuario) {
+      usuarioAtual = usuario;
+      localStorage.setItem('rodagem_usuario', JSON.stringify(usuario));
+      document.getElementById('usuarioNome').innerText = usuario.nome;
+      document.getElementById('telaLogin').classList.add('hidden');
+      document.getElementById('telaApp').classList.remove('hidden');
+      carregarDadosNuvem();
+    }
+
+    function sair() {
+      localStorage.removeItem('rodagem_usuario');
+      usuarioAtual = null;
+      document.getElementById('telaApp').classList.add('hidden');
+      document.getElementById('telaLogin').classList.remove('hidden');
+    }
+
     async function carregarDadosNuvem() {
-      const { data, error } = await _supabase.from('saidas').select('*').order('id', { ascending: false });
+      if (!usuarioAtual) return;
+      
+      // Busca APENAS as saídas vinculadas ao usuario_id logado
+      const { data, error } = await _supabase
+        .from('saidas')
+        .select('*')
+        .eq('usuario_id', usuarioAtual.id)
+        .order('id', { ascending: false });
+
       if (!error && data) {
         saidas = data;
         renderizar();
@@ -210,13 +298,12 @@
       }
     }
 
-    // Suporte universal a fotos (qualquer formato) com compressão inteligente
     function converterFoto(e) {
       const file = e.target.files[0];
       if (!file) return;
 
       if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecione um arquivo de imagem válido.');
+        alert('Selecione uma imagem válida.');
         return;
       }
 
@@ -229,7 +316,7 @@
         
         img.onload = function () {
           const canvas = document.createElement('canvas');
-          const maxWidth = 1000; // Resolução otimizada para legibilidade de notas
+          const maxWidth = 1000;
           let width = img.width;
           let height = img.height;
 
@@ -243,15 +330,10 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Converte qualquer formato de entrada para JPEG comprimido leve
           const compressed = canvas.toDataURL('image/jpeg', 0.7);
           document.getElementById('fotoBase64').value = compressed;
           document.getElementById('previewFoto').src = compressed;
           document.getElementById('previewFotoContainer').classList.remove('hidden');
-        };
-
-        img.onerror = function() {
-          alert('Não foi possível processar a imagem selecionada.');
         };
       };
     }
@@ -279,6 +361,8 @@
 
     async function salvarSaida(e) {
       e.preventDefault();
+      if (!usuarioAtual) return;
+
       const editId = document.getElementById('editId').value;
       const empresa = document.getElementById('empresa').value;
       const data = document.getElementById('dataSaida').value;
@@ -290,7 +374,18 @@
       const gastos = combustivel + pedagio + outros;
       const lucro = frete - gastos;
 
-      const payload = { empresa, data, frete, combustivel, pedagio, outros, gastos, lucro, foto };
+      const payload = { 
+        empresa, 
+        data, 
+        frete, 
+        combustivel, 
+        pedagio, 
+        outros, 
+        gastos, 
+        lucro, 
+        foto,
+        usuario_id: usuarioAtual.id 
+      };
 
       if (editId) {
         await _supabase.from('saidas').update(payload).eq('id', Number(editId));
@@ -401,7 +496,7 @@
       if (saidas.length === 0) {
         lista.innerHTML = `
           <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl text-center text-xs text-slate-500">
-            Nenhuma saída cadastrada na nuvem.
+            Nenhuma saída cadastrada para o seu perfil.
           </div>
         `;
       }
@@ -447,7 +542,10 @@
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
 
-    carregarDadosNuvem();
+    // Auto-login se já estiver salvo no navegador
+    if (usuarioAtual) {
+      iniciarSessao(usuarioAtual);
+    }
   </script>
 </body>
 </html>
